@@ -131,6 +131,49 @@ class CompanyManager:
         else:
             print("Помилка: Працівника з вказаним ID не знайдено.")
 
+    def search_employee_by_name(self, name_query):
+        """Шукає та виводить інформацію про працівників за частиною імені (без урахування регістру)."""
+        found_count = 0
+        # Приведення запиту до нижнього регістру для коректного порівняння
+        search_lower = name_query.lower()
+
+        print(f"--- Результати пошуку для '{name_query}' ---")
+        for emp in self.__employees:
+            # Перевірка входження підрядка в ім'я (також у нижньому регістрі)
+            if search_lower in emp.get_name().lower():
+                role = emp.__class__.__name__
+                print(f"ID: {emp.get_id()} | Ім'я: {emp.get_name()} | Посада: {role}")
+                found_count += 1
+
+        if found_count == 0:
+            print("Помилка: Працівників з таким ім'ям не знайдено.")
+        print("-" * 25)
+
+    def generate_text_report(self, filename="report.txt"):
+        """Генерує читабельний текстовий звіт про всіх працівників та їхню техніку."""
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write("=== ЗВІТ ПО КОМПАНІЇ ===\n\n")
+
+            # Прохід по всім працівникам для запису їхніх даних
+            for emp in self.__employees:
+                role = emp.__class__.__name__
+                file.write(f"ID: {emp.get_id()} | Ім'я: {emp.get_name()} | Посада: {role}\n")
+
+                equipment_list = emp.get_equipment()
+                # Перевірка наявності техніки
+                if not equipment_list:
+                    file.write("\t- Техніка відсутня\n")
+                else:
+                    # Запис кожної одиниці техніки з відступом
+                    for item in equipment_list:
+                        item_type = item.__class__.__name__
+                        file.write(f"\t- [{item_type}] ID: {item.get_id()} | Модель: {item.get_model()}\n")
+
+                # Порожній рядок між записами працівників для візуального розділення
+                file.write("\n")
+
+        print(f"Успіх: Текстовий звіт згенеровано у файл {filename}")
+
     def save_data(self, filename="data.json"):
         """Зберігає всі дані про працівників та обладнання у форматі JSON."""
         export_data = {
@@ -198,3 +241,38 @@ class CompanyManager:
                 self.__employees.append(new_employee)
 
         print(f"Дані успішно завантажено з файлу: {filename}")
+
+    def return_equipment(self, emp_id, eq_id):
+        """Повертає техніку від працівника на склад, роблячи її знову доступною."""
+        employee = self._find_employee_by_id(emp_id)
+        equipment = self._find_equipment_by_id(eq_id)
+
+        if employee is None or equipment is None:
+            print("Помилка: Працівника або техніку з вказаним ID не знайдено.")
+            return
+
+        # Перевірка чи техніка дійсно належить цьому працівнику
+        if equipment in employee.get_equipment():
+            # Видалення зі списку працівника та оновлення статусу об'єкта
+            employee.remove_equipment(equipment)
+            equipment.unassign()
+            print(f"Успіх: Техніку '{equipment.get_model()}' повернуто на склад від '{employee.get_name()}'.")
+        else:
+            print(f"Помилка: Техніка ID {eq_id} не закріплена за працівником {employee.get_name()}.")
+
+    def remove_equipment_from_system(self, eq_id):
+        """Повністю видаляє техніку з бази даних компанії (списання)."""
+        equipment = self._find_equipment_by_id(eq_id)
+
+        if equipment is None:
+            print("Помилка: Техніку з вказаним ID не знайдено.")
+            return
+
+        # Заборона видалення якщо техніка все ще у працівника
+        if equipment.get_status() == True:
+            print("Помилка: Неможливо списати техніку, яка закріплена за працівником. Спочатку поверніть її на склад.")
+            return
+
+        # Видалення об'єкта зі списку обладнання компанії
+        self.__equipment.remove(equipment)
+        print(f"Успіх: Техніку '{equipment.get_model()}' успішно списано та видалено з системи.")
