@@ -1,11 +1,18 @@
+import uuid
+
+
 class Equipment:
     """Базовий клас для зберігання загальних даних про обладнання."""
 
-    def __init__(self, eq_id, model_name):
-        """Ініціалізація об'єкта з прихованими атрибутами."""
-        self.__id = eq_id
+    def __init__(self, model_name, eq_id=None):
+        """Ініціалізація техніки з автоматичною генерацією унікального ідентифікатора."""
+        self.__id = eq_id if eq_id else str(uuid.uuid4())[:6]
         self.__model = model_name
         self.__is_assigned = False
+
+    def __str__(self):
+        """Повертає зручне рядкове представлення об'єкта техніки."""
+        return f"[{self.__class__.__name__}] ID: {self.__id} | Модель: {self.__model}"
 
     def get_id(self):
         """Повертає ідентифікатор обладнання."""
@@ -37,11 +44,11 @@ class Equipment:
 
 
 class Laptop(Equipment):
-    """Клас для зберігання даних про ноутбуки, наслідує Equipment."""
+    """Клас для зберігання даних про ноутбуки наслідує Equipment."""
 
-    def __init__(self, eq_id, model_name, os_type):
-        """Ініціалізація ноутбука з викликом батьківського конструктора та додаванням типу ОС."""
-        super().__init__(eq_id, model_name)
+    def __init__(self, model_name, os_type, eq_id=None):
+        """Ініціалізація ноутбука із зазначенням операційної системи."""
+        super().__init__(model_name, eq_id=eq_id)
         self.__os_type = os_type
 
     def get_os_type(self):
@@ -49,7 +56,7 @@ class Laptop(Equipment):
         return self.__os_type
 
     def to_dict(self):
-        """Перевизначає метод серіалізації, додаючи специфічні для ноутбука дані."""
+        """Перевизначає метод серіалізації додаючи специфічні для ноутбука дані."""
         base_dict = super().to_dict()
         base_dict["type"] = "Laptop"
         base_dict["os_type"] = self.__os_type
@@ -57,11 +64,11 @@ class Laptop(Equipment):
 
 
 class Monitor(Equipment):
-    """Клас для зберігання даних про монітори, наслідує Equipment."""
+    """Клас для зберігання даних про монітори наслідує Equipment."""
 
-    def __init__(self, eq_id, model_name, resolution):
-        """Ініціалізація монітора з викликом батьківського конструктора та додаванням роздільної здатності."""
-        super().__init__(eq_id, model_name)
+    def __init__(self, model_name, resolution, eq_id=None):
+        """Ініціалізація монітора із зазначенням роздільної здатності."""
+        super().__init__(model_name, eq_id=eq_id)
         self.__resolution = resolution
 
     def get_resolution(self):
@@ -69,7 +76,7 @@ class Monitor(Equipment):
         return self.__resolution
 
     def to_dict(self):
-        """Перевизначає метод серіалізації, додаючи специфічні для монітора дані."""
+        """Перевизначає метод серіалізації додаючи специфічні для монітора дані."""
         base_dict = super().to_dict()
         base_dict["type"] = "Monitor"
         base_dict["resolution"] = self.__resolution

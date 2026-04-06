@@ -1,6 +1,7 @@
 import os
 from controllers.company_manager import CompanyManager
-from utils.validators import get_non_empty_string, get_valid_integer, get_valid_choice
+from utils.validators import get_non_empty_string, get_valid_choice, CancelOperation
+
 
 def clear_screen():
     """Очищує консоль."""
@@ -24,6 +25,7 @@ if __name__ == "__main__":
         clear_screen()
 
         print("\n--- Головне Меню ---")
+        print("(Підказка: введіть '0' під час будь-якого запиту для скасування операції)")
         print("1 - Додати Розробника")
         print("2 - Додати Менеджера")
         print("3 - Додати Ноутбук")
@@ -36,47 +38,47 @@ if __name__ == "__main__":
         print("10 - Списати техніку з бази")
         print("11 - Знайти працівника за ім'ям")
         print("12 - Згенерувати текстовий звіт")
+        print("13 - Показати статистику (Дашборд)")
+        print("14 - Експортувати дані в CSV (Excel)")
         print("0 - Зберегти та Вийти")
 
         # Використання валідатора для вибору пункту меню
-        choice = get_non_empty_string("Ваш вибір: ")
+        choice = input("Ваш вибір: ").strip()
 
         # Обгортка для перехоплення непередбачуваних помилок
         try:
             if choice == '1':
-                emp_id = get_valid_integer("Введіть числовий ID розробника: ")
                 name = get_non_empty_string("Введіть ім'я розробника: ")
                 language = get_non_empty_string("Введіть мову програмування: ")
-                manager.add_developer(emp_id, name, language)
+                manager.add_developer(name, language)
                 pause_screen()
 
             elif choice == '2':
-                emp_id = get_valid_integer("Введіть числовий ID менеджера: ")
                 name = get_non_empty_string("Введіть ім'я менеджера: ")
-                department = get_non_empty_string("Введіть відділ: ")
-                manager.add_manager(emp_id, name, department)
+                allowed_departments = ["IT", "HR", "Sales", "Marketing", "Finance"]
+                department = get_valid_choice(f"Оберіть відділ {allowed_departments}: ", allowed_departments)
+                manager.add_manager(name, department)
                 pause_screen()
 
             elif choice == '3':
-                eq_id = get_valid_integer("Введіть числовий ID ноутбука: ")
                 model = get_non_empty_string("Введіть модель ноутбука: ")
                 os_type = get_valid_choice("Введіть тип ОС (Windows/Mac/Linux): ", ["Windows", "Mac", "Linux"])
-                manager.add_laptop(eq_id, model, os_type)
+                manager.add_laptop(model, os_type)
                 pause_screen()
 
             elif choice == '4':
-                eq_id = get_valid_integer("Введіть числовий ID монітора: ")
                 model = get_non_empty_string("Введіть модель монітора: ")
                 resolution = get_non_empty_string("Введіть роздільну здатність: ")
-                manager.add_monitor(eq_id, model, resolution)
+                manager.add_monitor(model, resolution)
                 pause_screen()
-
 
             elif choice == '5':
                 manager.show_all_employees()
                 manager.show_available_equipment()
-                emp_id = get_valid_integer("Введіть ID працівника: ")
-                eq_id = get_valid_integer("Введіть ID техніки: ")
+
+                # Заміна на get_non_empty_string бо ID тепер є текстом
+                emp_id = get_non_empty_string("Введіть ID працівника: ")
+                eq_id = get_non_empty_string("Введіть ID техніки: ")
                 manager.assign_equipment_to_employee(emp_id, eq_id)
                 pause_screen()
 
@@ -89,18 +91,24 @@ if __name__ == "__main__":
                 pause_screen()
 
             elif choice == '8':
-                emp_id = get_valid_integer("Введіть ID працівника для звільнення: ")
+                # Вивід контексту перед запитом ID
+                manager.show_all_employees()
+                emp_id = get_non_empty_string("Введіть ID працівника для звільнення: ")
                 manager.remove_employee(emp_id)
                 pause_screen()
 
             elif choice == '9':
-                emp_id = get_valid_integer("Введіть ID працівника, який повертає техніку: ")
-                eq_id = get_valid_integer("Введіть ID техніки для повернення: ")
+                # Вивід контексту перед запитом ID
+                manager.show_all_employees()
+                emp_id = get_non_empty_string("Введіть ID працівника, який повертає техніку: ")
+                eq_id = get_non_empty_string("Введіть ID техніки для повернення: ")
                 manager.return_equipment(emp_id, eq_id)
                 pause_screen()
 
             elif choice == '10':
-                eq_id = get_valid_integer("Введіть ID техніки для повного списання: ")
+                # Вивід вільної техніки зі складу перед списанням
+                manager.show_available_equipment()
+                eq_id = get_non_empty_string("Введіть ID техніки для повного списання: ")
                 manager.remove_equipment_from_system(eq_id)
                 pause_screen()
 
@@ -113,8 +121,15 @@ if __name__ == "__main__":
                 manager.generate_text_report()
                 pause_screen()
 
+            elif choice == '13':
+                manager.show_statistics()
+                pause_screen()
+
+            elif choice == '14':
+                manager.export_to_csv()
+                pause_screen()
+
             elif choice == '0':
-                # Збереження стану та безпечний вихід без паузи
                 manager.save_data()
                 print("Дані збережено. До побачення!")
                 break
@@ -122,6 +137,11 @@ if __name__ == "__main__":
             else:
                 print("Невідома команда. Спробуйте ще раз.")
                 pause_screen()
+
+        except CancelOperation:
+            # Перехоплення скасування та м'яке повернення до меню
+            print("\n[!] Операцію скасовано користувачем. Повернення до головного меню.")
+            pause_screen()
 
         except Exception as e:
             # Обробка критичних помилок без завершення програми

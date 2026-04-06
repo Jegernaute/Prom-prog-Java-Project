@@ -1,11 +1,18 @@
+import uuid
+
+
 class Employee:
     """Базовий клас для зберігання загальних даних про працівника."""
 
-    def __init__(self, emp_id, name):
-        """Ініціалізація працівника з прихованими атрибутами та порожнім списком техніки."""
-        self.__id = emp_id
+    def __init__(self, name, emp_id=None):
+        """Ініціалізація працівника з підтримкою відновлення існуючого ID або автогенерації нового."""
+        self.__id = emp_id if emp_id else f"EMP-{str(uuid.uuid4())[:4]}"
         self.__name = name
         self.__equipment_list = []
+
+    def __str__(self):
+        """Повертає зручне рядкове представлення об'єкта працівника."""
+        return f"ID: {self.__id} | Ім'я: {self.__name}"
 
     def get_id(self):
         """Повертає ідентифікатор працівника."""
@@ -16,7 +23,7 @@ class Employee:
         return self.__name
 
     def get_equipment(self):
-        """Повертає список виданої техніки (об'єктів)."""
+        """Повертає список виданої техніки."""
         return self.__equipment_list
 
     def add_equipment(self, item):
@@ -24,7 +31,7 @@ class Employee:
         self.__equipment_list.append(item)
 
     def remove_equipment(self, item):
-        """Видаляє об'єкт техніки зі списку працівника, якщо він там є."""
+        """Видаляє об'єкт техніки зі списку працівника якщо він там є."""
         if item in self.__equipment_list:
             self.__equipment_list.remove(item)
         else:
@@ -47,10 +54,10 @@ class Employee:
 class Developer(Employee):
     """Клас для розробників наслідує Employee."""
 
-    def __init__(self, emp_id, name, programming_language):
-        """Ініціалізація розробника з вказівкою мови програмування."""
-        super().__init__(emp_id, name)
-        self.__programming_language = programming_language
+    def __init__(self, name, language, emp_id=None):
+        """Ініціалізація розробника із зазначенням основної мови програмування та опціонального ID."""
+        super().__init__(name, emp_id=emp_id)
+        self.__programming_language = language
 
     def get_language(self):
         """Повертає мову програмування розробника."""
@@ -70,9 +77,9 @@ class Developer(Employee):
 class Manager(Employee):
     """Клас для менеджерів наслідує Employee."""
 
-    def __init__(self, emp_id, name, department):
-        """Ініціалізація менеджера з вказівкою відділу."""
-        super().__init__(emp_id, name)
+    def __init__(self, name, department, emp_id=None):
+        """Ініціалізація менеджера із зазначенням відділу та опціонального ID."""
+        super().__init__(name, emp_id=emp_id)
         self.__department = department
 
     def get_department(self):

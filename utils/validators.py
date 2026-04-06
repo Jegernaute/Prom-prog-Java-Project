@@ -1,27 +1,40 @@
-def get_non_empty_string(prompt_text):
-    """Отримує від користувача текстовий рядок гарантуючи що він не є порожнім."""
+class CancelOperation(Exception):
+    """Виняток для миттєвого переривання поточної операції користувачем (введення 0)."""
+    pass
+
+
+def get_non_empty_string(prompt):
+    """Отримує та перевіряє непорожній рядок. Перериває роботу при введенні 0."""
     while True:
-        # Отримання вводу з видаленням зайвих пробілів по краях
-        user_input = input(prompt_text).strip()
+        user_input = input(prompt).strip()
+        if user_input == '0':
+            raise CancelOperation()
 
         if user_input:
             return user_input
+        print("Помилка: Введення не може бути порожнім. Спробуйте ще раз або введіть '0' для скасування.")
 
-        print("Помилка: Це поле не може бути порожнім. Спробуйте ще раз.")
 
-def get_valid_integer(prompt_text):
-    """Отримує від користувача ціле число, обробляючи помилки неправильного формату."""
+def get_valid_integer(prompt):
+    """Отримує та перевіряє ціле число. Перериває роботу при введенні 0."""
     while True:
+        input_str = input(prompt).strip()
+        if input_str == '0':
+            raise CancelOperation()
+
         try:
-            return int(input(prompt_text).strip())
+            return int(input_str)
         except ValueError:
-            print("Помилка: Будь ласка, введіть ціле число.")
+            print("Помилка: Будь ласка, введіть коректне ціле число або '0' для скасування.")
 
 
-def get_valid_choice(prompt_text, valid_options):
-    """Отримує від користувача значення, яке має збігатися з одним із дозволених варіантів."""
+def get_valid_choice(prompt, allowed_choices):
+    """Отримує введення та перевіряє його наявність у списку дозволених варіантів. Перериває роботу при введенні 0."""
     while True:
-        user_input = input(prompt_text).strip()
-        if user_input in valid_options:
+        user_input = input(prompt).strip()
+        if user_input == '0':
+            raise CancelOperation()
+
+        if user_input in allowed_choices:
             return user_input
-        print(f"Помилка: Оберіть один з варіантів {valid_options}")
+        print(f"Помилка: Дозволено вводити лише {allowed_choices}. Введіть '0' для скасування.")
