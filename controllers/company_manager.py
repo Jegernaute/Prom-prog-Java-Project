@@ -40,6 +40,7 @@ class CompanyManager:
         self.__employees.append(new_dev)
         print(f"Успіх: Розробника '{name}' додано до системи.")
         self._log_action(f"Створено працівника: {name} (ID: {new_dev.get_id()})")
+        return new_dev.get_id()
 
     def add_manager(self, name, department):
         """Додає нового менеджера до бази компанії."""
@@ -47,6 +48,7 @@ class CompanyManager:
         self.__employees.append(new_manager)
         print(f"Успіх: Менеджера '{name}' додано до системи.")
         self._log_action(f"Створено працівника: {name} (ID: {new_manager.get_id()})")
+        return new_manager.get_id()
 
     def add_laptop(self, model, os_type):
         """Додає новий ноутбук на склад компанії."""
@@ -54,6 +56,7 @@ class CompanyManager:
         self.__equipment.append(new_laptop)
         print(f"Успіх: Ноутбук '{model}' додано на склад.")
         self._log_action(f"Додано на склад техніку: {model} (ID: {new_laptop.get_id()})")
+        return new_laptop.get_id()
 
     def add_monitor(self, model, resolution):
         """Додає новий монітор на склад компанії."""
@@ -61,6 +64,7 @@ class CompanyManager:
         self.__equipment.append(new_monitor)
         print(f"Успіх: Монітор '{model}' додано на склад.")
         self._log_action(f"Додано на склад техніку: {model} (ID: {new_monitor.get_id()})")
+        return new_monitor.get_id()
 
     def show_all_employees(self):
         """Виводить список усіх працівників компанії та закріплену за ними техніку."""
@@ -100,6 +104,23 @@ class CompanyManager:
 
         if employee and equipment:
             if not equipment.get_status():
+                # ліміт ноутів
+                if equipment.__class__.__name__ == "Laptop":
+                    # Шукає чи є вже хоча б один ноутбук у списку техніки працівника
+                    has_laptop = any(item.__class__.__name__ == "Laptop" for item in employee.get_equipment())
+                    if has_laptop:
+                        print(
+                            f"Помилка: Працівник '{employee.get_name()}' вже має закріплений ноутбук. Ліміт перевищено.")
+                        return  # Перериває метод видача не відбувається
+
+                # ліміт моніторів
+                if equipment.__class__.__name__ == "Monitor":
+                    monitor_count = sum(1 for item in employee.get_equipment() if item.__class__.__name__ == "Monitor")
+                    if monitor_count >= 2:
+                        print(
+                            f"Помилка: Працівник '{employee.get_name()}' вже має 2 монітори. Максимальний ліміт перевищено.")
+                        return
+
                 employee.add_equipment(equipment)
                 equipment.assign()
                 print(f"Успіх: Техніку '{equipment.get_model()}' видано працівнику '{employee.get_name()}'.")
@@ -114,7 +135,7 @@ class CompanyManager:
         employee = self._find_employee_by_id(emp_id)
 
         if employee is not None:
-            # Зняття статусу "призначено" з усієї техніки працівника
+            # Зняття статусу призначено з усієї техніки працівника
             for item in employee.get_equipment():
                 item.unassign()
 
@@ -126,22 +147,18 @@ class CompanyManager:
             print("Помилка: Працівника з вказаним ID не знайдено.")
 
     def search_employee_by_name(self, name_query):
-        """Шукає та виводить інформацію про працівників за частиною імені (без урахування регістру)."""
-        found_count = 0
-        # Приведення запиту до нижнього регістру для коректного порівняння
-        search_lower = name_query.lower()
+        """Шукає працівників за частковим збігом імені (нечутливо до регістру) та повертає список результатів."""
+        query = name_query.lower()
+        found_employees = [emp for emp in self.__employees if query in emp.get_name().lower()]
 
-        print(f"--- Результати пошуку для '{name_query}' ---")
-        for emp in self.__employees:
-            # Перевірка входження підрядка в ім'я (також у нижньому регістрі)
-            if search_lower in emp.get_name().lower():
-                role = emp.__class__.__name__
-                print(f"ID: {emp.get_id()} | Ім'я: {emp.get_name()} | Посада: {role}")
-                found_count += 1
+        if not found_employees:
+            print(f"За запитом '{name_query}' нікого не знайдено.")
+        else:
+            print(f"--- Результати пошуку ('{name_query}') ---")
+            for emp in found_employees:
+                print(f"{emp} | Посада: {emp.__class__.__name__}")
 
-        if found_count == 0:
-            print("Помилка: Працівників з таким ім'ям не знайдено.")
-        print("-" * 25)
+        return found_employees
 
     def show_statistics(self):
         """Виводить загальну аналітику та статистику по працівниках і техніці компанії."""
@@ -184,12 +201,11 @@ class CompanyManager:
                 if not equipment_list:
                     file.write("\t- Техніка відсутня\n")
                 else:
-                    # Запис кожної одиниці техніки з відступом
+                    # Запис кожної одиниці техніки
                     for item in equipment_list:
                         item_type = item.__class__.__name__
                         file.write(f"\t- [{item_type}] ID: {item.get_id()} | Модель: {item.get_model()}\n")
 
-                # Порожній рядок між записами працівників для візуального розділення
                 file.write("\n")
 
         print(f"Успіх: Текстовий звіт згенеровано у файл {filename}")
